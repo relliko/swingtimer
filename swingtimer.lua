@@ -13,7 +13,7 @@
 
 addon.name    = 'swingtimer';
 addon.author  = 'Relli';
-addon.version = '0.1';
+addon.version = '0.1.1';
 addon.desc    = 'A slim bar that fills up until your next melee round.';
 addon.link    = '';
 
@@ -51,7 +51,8 @@ local SAVE_EVERY = 30;
 local TRACK      = 0x59000000; -- ImGui colors, 0xAABBGGRR
 local FILL       = 0xC8D2E8F0;
 local OUTLINE    = 0x5AFFFFFF;
-local TEXT       = { 0.92, 0.90, 0.85, 0.85 };
+local TEXT       = 0xD9D9E6EB;
+local TEXT_SCALE = 0.8;  -- the countdown, against the font size
 
 local function msg(text)
     print(chat.header(addon.name):append(chat.message(text)));
@@ -119,7 +120,7 @@ local function draw(t)
     end
     if (imgui.Begin('swingtimer', { true }, flags)) then
         local w, h = s.width, s.height;
-        local row = s.text and math.max(h, imgui.GetFontSize() * 0.8) or h;
+        local row = s.text and math.max(h, imgui.GetFontSize() * TEXT_SCALE) or h;
         local x, y = imgui.GetCursorScreenPos();
         local top = y + (row - h) / 2;
         imgui.Dummy({ w, row });
@@ -132,10 +133,14 @@ local function draw(t)
             dl:AddRect({ x - 3, top - 3 }, { x + w + 3, top + h + 3 }, OUTLINE);
         end
         if (s.text and left ~= nil and left > 0) then
+            -- Drawn at a size: Ashita's ImGui has no SetWindowFontScale.
+            local text = ('%.1f'):fmt(left / 1000);
+            local size = imgui.GetFontSize() * TEXT_SCALE;
+            local tw = imgui.CalcTextSize(text) * TEXT_SCALE;
             imgui.SameLine();
-            imgui.SetWindowFontScale(0.8);
-            imgui.TextColored(TEXT, ('%.1f'):fmt(left / 1000));
-            imgui.SetWindowFontScale(1);
+            local tx, ty = imgui.GetCursorScreenPos();
+            imgui.Dummy({ tw, row });
+            dl:AddText(imgui.GetFont(), size, { tx, ty + (row - size) / 2 }, TEXT, text);
         end
         if (st.placing) then
             local wx, wy = imgui.GetWindowPos();
