@@ -13,7 +13,7 @@
 --]]
 
 addon.name    = 'swingtimer';
-addon.author  = 'Relli';
+addon.author  = 'relli';
 addon.version = '0.2.1';
 addon.desc    = 'A slim bar that fills up until your next melee round.';
 addon.link    = '';
