@@ -14,7 +14,7 @@
 
 addon.name    = 'swingtimer';
 addon.author  = 'Relli';
-addon.version = '0.2';
+addon.version = '0.2.1';
 addon.desc    = 'A slim bar that fills up until your next melee round.';
 addon.link    = '';
 
@@ -295,7 +295,7 @@ ashita.events.register('command', 'swingtimer_command', function (e)
         msg(('weapon set %s: delay %.0f ms, learned %s, recent rounds %s'):fmt(set, timing.base_ms(),
             learned and ('%d ms'):fmt(learned) or 'nothing yet', #recent > 0 and table.concat(recent, ' ') or 'none'));
         if (enemy.id == nil) then
-            msg('mob: none yet (it shows once you or it swings)');
+            msg('mob: none yet (your engaged target shows once it swings)');
         else
             local mob = enemy.name and s.enemies[enemy.name];
             local erecent = { };
@@ -336,7 +336,7 @@ ashita.events.register('packet_in', 'swingtimer_packet_in', function (e)
         if (round) then
             timing.on_round(t);
             if (enemy.is_mob(target)) then
-                enemy.set(target); -- the mob you're hitting
+                enemy.set(target); -- the mob you're engaged on (switching follows your rounds)
             end
         else
             timing.on_action();
@@ -347,9 +347,6 @@ ashita.events.register('packet_in', 'swingtimer_packet_in', function (e)
         else
             enemy.on_action();
         end
-    elseif (round and enemy.id == nil and st.engaged and enemy.is_mob(actor) and target == id) then
-        enemy.set(actor); -- a mob hitting you before you've swung
-        enemy.on_round(t);
     end
 end);
 
@@ -365,6 +362,7 @@ ashita.events.register('d3d_present', 'swingtimer_present', function ()
         end
     elseif (not now and st.engaged) then
         timing.on_disengage();
+        enemy.set(nil);
         st.fade_from = t;
     end
     st.engaged = now;

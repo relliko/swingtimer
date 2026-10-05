@@ -36,6 +36,6 @@ The server (PhoenixXI, a LandSandBoat fork) swings one weapon delay after your l
 ## The mob's bar
 Mobs swing on the same round timer as you, and most have a 4 second delay. The red bar starts at that and learns the real time between the mob's rounds, so slow, haste and slower mobs are picked up within a round or two.
 
-- The mob is the one you're hitting (or the one hitting you, before you've swung). The bar shows once it has swung once, and goes away when it dies.
+- It only times the mob you're engaged on: the one you engaged, then whichever your rounds hit if you switch. The bar shows once that mob has swung once, and goes away when it dies or you disengage.
 - Intervals with a TP move or spell in them aren't learned, and while the mob is busy its bar stays full until its next round lands.
 - Learned speeds are kept by the mob's name, so the next one of the same kind starts out right.
