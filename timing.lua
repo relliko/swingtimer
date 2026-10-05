@@ -107,40 +107,41 @@ local function near(a, b)
     return math.abs(a - b) <= math.max(TICK_MS, b * 0.2);
 end
 
-local function remember(set, s)
-    local v = math.floor(mean(s) + 0.5);
-    if (timing.learned[set] ~= v) then
-        timing.learned[set] = v;
-        timing.dirty = true;
-    end
-end
-
 --[[
-* A clean interval between two rounds. One far from the recent ones means your speed changed
-* (haste on or off) and starts over from it; one much longer than expected is left out (out of
-* range, or a pause), unless the next one agrees with it.
+* A clean interval between two rounds, for a tracker `tr` (its `samples` and `long`) expecting
+* `expected` ms; `keep` is given the new average. One far from the recent ones means the speed
+* changed (haste or slow on or off) and starts over from it; one much longer than expected is
+* left out (out of range, or a pause), unless the next one agrees with it.
 --]]
-local function learn(set, ms)
-    local s = timing.samples;
-    if (ms > timing.estimate() * 1.5 + TICK_MS) then
-        if (timing.long ~= nil and near(ms, timing.long)) then
-            timing.samples, timing.long = { timing.long, ms }, nil;
-            remember(set, timing.samples);
+function timing.learn(tr, ms, expected, keep)
+    local s = tr.samples;
+    if (ms > expected * 1.5 + TICK_MS) then
+        if (tr.long ~= nil and near(ms, tr.long)) then
+            tr.samples, tr.long = { tr.long, ms }, nil;
+            keep(mean(tr.samples));
         else
-            timing.long = ms;
+            tr.long = ms;
         end
         return;
     end
-    timing.long = nil;
+    tr.long = nil;
     if (#s > 0 and not near(ms, mean(s))) then
         s = { };
-        timing.samples = s;
+        tr.samples = s;
     end
     s[#s + 1] = ms;
     if (#s > SAMPLES) then
         table.remove(s, 1);
     end
-    remember(set, s);
+    keep(mean(s));
+end
+
+local function remember(set, v)
+    v = math.floor(v + 0.5);
+    if (timing.learned[set] ~= v) then
+        timing.learned[set] = v;
+        timing.dirty = true;
+    end
 end
 
 -- You engaged at time t (seconds): the first round is due 2 s later.
@@ -165,7 +166,7 @@ function timing.on_round(t)
         timing.set, timing.samples, timing.long, timing.clean = set, { }, nil, false;
     end
     if (timing.last ~= nil and not timing.first and timing.clean) then
-        learn(set, (t - timing.last) * 1000);
+        timing.learn(timing, (t - timing.last) * 1000, timing.estimate(), function (v) remember(set, v); end);
     end
     timing.last, timing.first, timing.clean = t, false, true;
 end
